@@ -1,4 +1,5 @@
 # augmented-reality
+
 Augmented reality card based application with Python, numpy and OpenCV
 
 ## Usage
@@ -8,25 +9,24 @@ Augmented reality card based application with Python, numpy and OpenCV
 * On line 40 of `src/ar_main.py` replace `'fox.obj'` with the name of the model you want to render. To change the size of the rendered model change the scale parameter (number `3`) in line 103 of `src/ar_main.py` by a suitable number. This might require some trial and error.
 * Open a terminal session inside the project folder and run `python src/ar_main.py`
 
-
 ### Command line arguments
 
 * `--rectangle`, `-r`: Draws the projection of the reference surface on the video frame as a blue rectangle.
 * `--matches`, `-m`: Draws matches between reference surface and video frame.
 
-
 ## Troubleshooting
 
 **If you get the message**:
 
-```
+```bash
 Unable to capture video
 ```
+
 printed to your terminal, the most likely cause is that your OpenCV installation has been compiled without FFMPEG support. Pre-built OpenCV packages such as the ones downloaded via pip are not compiled with FFMPEG support, which means that you have to build it manually.
 
 **If you get the error**:
 
-```
+```bash
 Traceback (most recent call last):
 File "src/ar_main.py", line 174, in
 main()
@@ -36,6 +36,7 @@ File "[...]/augmented-reality/src/objloader_simple.py", line 16, in init
 v = v[0], v[2], v[1]
 TypeError: 'map' object is not subscriptable
 ```
+
 The most likely cause is that you are trying to execute the code with Python 3 and the code is written in Python 2. The `map` function in Python 3 returns an iterable object of type map, and not a subscriptible list. To fix it, change the calls to `map()` by `list(map())` on lines 14, 19 and 24 of `src/objloader_simple.py`. 
 
 ## Explanation
