@@ -1,4 +1,5 @@
 class OBJ:
+    ''' proper description '''
     def __init__(self, filename, swapyz=False):
         """Loads a Wavefront OBJ file. """
         self.vertices = []
