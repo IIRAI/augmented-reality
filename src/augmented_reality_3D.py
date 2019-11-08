@@ -6,6 +6,7 @@ import numpy as np
 
 from configuration import parameters as parameter
 from src.objloader_simple import OBJ
+from src.filter_simple import FadingFilter
 
 
 class AR_3D:
@@ -15,13 +16,14 @@ class AR_3D:
     input:  
     -`reference2D`: string, name of the reference 
                     (only .jpg are supported at the moment).  
-    -`model3D`: string, name of the 3D object to render (.obj file).
+    -`model3D`: string, name of the 3D object to render (.obj file).  
+    -`sample_time`: sample time of the video stream -> 1 / fps.  
     -`rectangle`: bool, display or not a bounding box where the reference
                   is estimated.  
     -`matches`: display the reference image on the side and show the matches.  
     '''
 
-    def __init__(self, reference2D: str, model3D: str,
+    def __init__(self, reference2D: str, model3D: str, sample_time: float,
                  rectangle=False, matches=False):
         # create ORB keypoint detector
         self.orb = cv2.ORB_create()
@@ -40,6 +42,8 @@ class AR_3D:
         # frame rendering option
         self.rectangle = rectangle
         self.matches = matches
+        # initialize filter class
+        self.filter = FadingFilter(0.5, sample_time)
 
     def process_frame(self, frame):
         '''
@@ -61,6 +65,8 @@ class AR_3D:
             homography = self.compute_homography(kp_frame, matches)
             # if a valid homography matrix was found render cube on model plane
             if homography is not None:
+                # filter homography
+                homography = self.filter.II_order_ff(homography)
                 # obtain 3D projection matrix from homography matrix
                 # and camera parameters
                 projection = self.projection_matrix(

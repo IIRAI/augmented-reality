@@ -44,10 +44,14 @@ def parse_input():
 
 def main():
     args = parse_input()                       # manage input parameters
-    # init object for augmented reality computation
-    ar_3d = AR_3D('ticket', 'fox',
-                  args.rectangle, args.matches)
+    
     cap = cv2.VideoCapture(0)                  # begin camera streaming
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    sample_time = 1 / fps
+
+    # init object for augmented reality computation
+    ar_3d = AR_3D('ticket', 'fox', sample_time,
+                  args.rectangle, args.matches)
 
     while True:
         ret, frame = cap.read()                # get frame from camera
