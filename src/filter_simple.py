@@ -1,6 +1,7 @@
 
 import numpy as np
 
+
 class FadingFilter:
     '''
     Implement a fading filter of the first and second order.  
