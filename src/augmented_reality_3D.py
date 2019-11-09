@@ -161,7 +161,7 @@ class AR_3D:
     def render(self, img, obj, projection, model, color=False):
         ''' Render a loaded .obj model into the current video frame. '''
         vertices = self.obj.vertices
-        scale_matrix = np.eye(3) * 3
+        scale_matrix = np.eye(3) * 3  # TODO(ed): make the scale factor more manageable
         h, w = self.model.shape
 
         for face in self.obj.faces:
