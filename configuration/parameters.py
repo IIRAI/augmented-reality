@@ -15,3 +15,6 @@ u0 = 640.0 / 2
 v0 = 480.0 / 2
 # calibration matrix
 CAMERA_CALIBRATION = np.array([[800, 0, u0], [0, 800, v0], [0, 0, 1]])
+
+# size multiplier of the rendered 3D object
+SIZE_MULT = 5
