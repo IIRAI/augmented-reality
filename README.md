@@ -31,7 +31,9 @@ Another way is to install all the required package via:
 
     pip install -r requirements.txt
 
-which lists *all* the packages, also those required and installed together with *cv2* and *numpy*.
+which lists *all* the packages, also those required and installed together with *cv2* and *numpy* but also some additional packages (e.g. some linting packages) that maybe you don't want.
+
+**Remark:** check this [guide](environment_setup.md) to understand how I created a dedicated virtual environment for this project.
 
 ## Explanation
 

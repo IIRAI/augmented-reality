@@ -13,14 +13,14 @@ class AR_3D:
     '''
     This class manage the computation to add a 3D object in a camera
     streaming.  
-    input:  
-    -`reference2D`: string, name of the reference 
-                    (only .jpg are supported at the moment).  
-    -`model3D`: string, name of the 3D object to render (.obj file).  
-    -`sample_time`: sample time of the video stream -> 1 / fps.  
+    input:
+    -`reference2D`: string, name of the reference
+                    (only .jpg are supported at the moment).
+    -`model3D`: string, name of the 3D object to render (.obj file).
+    -`sample_time`: sample time of the video stream -> 1 / fps.
     -`rectangle`: bool, display or not a bounding box where the reference
-                  is estimated.  
-    -`matches`: display the reference image on the side and show the matches.  
+                  is estimated.
+    -`matches`: display the reference image on the side and show the matches.
     '''
 
     def __init__(self, reference2D: str, model3D: str, sample_time: float,
@@ -48,11 +48,11 @@ class AR_3D:
     def process_frame(self, frame):
         '''
         main function of the class, `process_frame` execute the entire pipeline
-        to compute the frame rendering, that is:  
-            1. frame feature extraction and reference detection.  
-            2. homography estimation.  
-            3. homogeneus 3D transformation estimation.  
-            4. 3D object rendering in the frame,  
+        to compute the frame rendering, that is:
+            1. frame feature extraction and reference detection.
+            2. homography estimation.
+            3. homogeneus 3D transformation estimation.
+            4. 3D object rendering in the frame,
         input:
         - `frame`: frame to be analysed
         output:
@@ -72,14 +72,14 @@ class AR_3D:
                 projection = self.projection_matrix(
                     parameter.CAMERA_CALIBRATION, homography)
                 if self.rectangle:  # draw rectangle over the reference
-                    frame = self.draw_rectangle(self.model, frame, homography)
+                    frame = self.draw_rectangle(frame, homography)
                 if self.matches:    # draw first 10 matches.
                     frame = cv2.drawMatches(self.model, self.kp_model,
                                             frame, kp_frame,
                                             matches[:parameter.MIN_MATCHES],
                                             0, flags=2)
                 # project cube or model
-                frame = self.render(frame, self.obj, projection, self.model)
+                frame = self.render(frame, projection)
         else:
             print("Not enough matches found - %d/%d" %
                   (len(matches), parameter.MIN_MATCHES))
@@ -116,14 +116,14 @@ class AR_3D:
         '''
         # Compute rotation along the x and y axis as well as the translation
         homography = homography * (-1)
-        rot_and_transl = np.dot(np.linalg.inv(camera_calibration), homography)
+        rot_and_transl = np.linalg.inv(camera_calibration) @ homography
         col_1 = rot_and_transl[:, 0]
         col_2 = rot_and_transl[:, 1]
         col_3 = rot_and_transl[:, 2]
         # normalise vectors
         l = math.sqrt(np.linalg.norm(col_1, 2) * np.linalg.norm(col_2, 2))
-        rot_1 = col_1 / l
-        rot_2 = col_2 / l
+        rot_1       = col_1 / l
+        rot_2       = col_2 / l
         translation = col_3 / l
         # compute the orthonormal basis
         c = rot_1 + rot_2
@@ -136,19 +136,18 @@ class AR_3D:
         rot_3 = np.cross(rot_1, rot_2)
         # compute the 3D projection matrix from the model to the current frame
         projection = np.stack((rot_1, rot_2, rot_3, translation)).T
-        return np.dot(camera_calibration, projection)
+        return camera_calibration @ projection
 
-    def draw_rectangle(self, model, frame, homography):
+    def draw_rectangle(self, frame, homography):
         '''
         Draw a rectangle that marks the found model in the frame.
         input:
-        - `model`: image of the model.
         - `frame`: image if the frame.
         - `homography`: homography estimate.
         output:
         - `frame` in which is marked a rectangle where the model has been found.
         '''
-        h, w = model.shape
+        h, w = self.model.shape
         pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1],
                           [w - 1, 0]]).reshape(-1, 1, 2)
         # project corners into frame
@@ -158,7 +157,7 @@ class AR_3D:
             frame, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
         return frame
 
-    def render(self, img, obj, projection, model, color=False):
+    def render(self, img, projection, color=False):
         ''' Render a loaded .obj model into the current video frame. '''
         vertices = self.obj.vertices
         scale_matrix = np.eye(3) * parameter.SIZE_MULT
@@ -168,7 +167,7 @@ class AR_3D:
             face_vertices = face[0]
             points = np.array([vertices[vertex - 1]
                                for vertex in face_vertices])
-            points = np.dot(points, scale_matrix)
+            points = points @ scale_matrix
             # render model in the middle of the reference surface. To do so,
             # model points must be displaced
             points = np.array([[p[0] + w / 2, p[1] + h / 2, p[2]]
