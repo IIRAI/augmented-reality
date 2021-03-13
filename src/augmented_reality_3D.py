@@ -31,7 +31,7 @@ class AR_3D:
         self.bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         # load the reference surface that will be searched in the video stream
         dir_name = os.getcwd()
-        ref_path = 'reference/' + reference2D + '.jpg'
+        ref_path = 'reference/' + reference2D
         self.model = cv2.imread(os.path.join(dir_name, ref_path), 0)
         # Compute model keypoints and its descriptors
         self.kp_model, self.des_model = self.orb.detectAndCompute(
@@ -43,16 +43,16 @@ class AR_3D:
         self.rectangle = rectangle
         self.matches = matches
         # initialize filter class
-        self.filter = FadingFilter(0.5, sample_time)
+        self.filter = FadingFilter(0.99, sample_time)
 
     def process_frame(self, frame):
         '''
         main function of the class, `process_frame` execute the entire pipeline
-        to compute the frame rendering, that is:  
-            1. frame feature extraction and reference detection.  
-            2. homography estimation.  
-            3. homogeneus 3D transformation estimation.  
-            4. 3D object rendering in the frame,  
+        to compute the frame rendering, that is:
+            1. frame feature extraction and reference detection.
+            2. homography estimation.
+            3. homogeneus 3D transformation estimation.
+            4. 3D object rendering in the frame,
         input:
         - `frame`: frame to be analysed
         output:
@@ -60,29 +60,32 @@ class AR_3D:
         '''
         # detect frame features
         kp_frame, matches = self.feature_detection(frame)
-        # compute Homography if enough matches are found
-        if len(matches) > parameter.MIN_MATCHES:
-            homography = self.compute_homography(kp_frame, matches)
-            # if a valid homography matrix was found render cube on model plane
-            if homography is not None:
-                # filter homography
-                homography = self.filter.II_order_ff(homography)
-                # obtain 3D projection matrix from homography matrix
-                # and camera parameters
-                projection = self.projection_matrix(
-                    parameter.CAMERA_CALIBRATION, homography)
-                if self.rectangle:  # draw rectangle over the reference
-                    frame = self.draw_rectangle(self.model, frame, homography)
-                if self.matches:    # draw first 10 matches.
-                    frame = cv2.drawMatches(self.model, self.kp_model,
-                                            frame, kp_frame,
-                                            matches[:parameter.MIN_MATCHES],
-                                            0, flags=2)
-                # project cube or model
-                frame = self.render(frame, self.obj, projection, self.model)
+        if matches is not None:
+            # compute Homography if enough matches are found
+            if len(matches) > parameter.MIN_MATCHES:
+                homography = self.compute_homography(kp_frame, matches)
+                # if a valid homography matrix was found render cube on model plane
+                if homography is not None:
+                    # filter homography
+                    homography = self.filter.II_order_ff(homography)
+                    # obtain 3D projection matrix from homography matrix
+                    # and camera parameters
+                    projection = self.projection_matrix(
+                        parameter.CAMERA_CALIBRATION, homography)
+                    if self.rectangle:  # draw rectangle over the reference
+                        frame = self.draw_rectangle(self.model, frame, homography)
+                    if self.matches:    # draw first 10 matches.
+                        frame = cv2.drawMatches(self.model, self.kp_model,
+                                                frame, kp_frame,
+                                                matches[:parameter.MIN_MATCHES],
+                                                0, flags=2)
+                    # project cube or model
+                    frame = self.render(frame, self.obj, projection, self.model)
+            else:
+                print("Not enough matches found - %d/%d" %
+                      (len(matches), parameter.MIN_MATCHES))
         else:
-            print("Not enough matches found - %d/%d" %
-                  (len(matches), parameter.MIN_MATCHES))
+            print("NONE matches")
         # in any case return the frame
         return frame
 
@@ -91,11 +94,13 @@ class AR_3D:
         # find and draw the keypoints of the frame
         kp_frame, des_frame = self.orb.detectAndCompute(frame, None)
         # match frame descriptors with model descriptors
-        matches = self.bf.match(self.des_model, des_frame)
-        # sort them in the order of their distance
-        # the lower the distance, the better the match
-        matches = sorted(matches, key=lambda x: x.distance)
-        return kp_frame, matches
+        if des_frame is not None:
+            matches = self.bf.match(self.des_model, des_frame)
+            # sort them in the order of their distance
+            # the lower the distance, the better the match
+            matches = sorted(matches, key=lambda x: x.distance)
+            return kp_frame, matches
+        return kp_frame, None
 
     def compute_homography(self, kp_frame, matches):
         ''' estimate the homography transformation'''
@@ -161,7 +166,7 @@ class AR_3D:
     def render(self, img, obj, projection, model, color=False):
         ''' Render a loaded .obj model into the current video frame. '''
         vertices = self.obj.vertices
-        scale_matrix = np.eye(3) * 3  # TODO(ed): make the scale factor more manageable
+        scale_matrix = np.eye(3) * 0.5 # TODO(ed): make the scale factor more manageable
         h, w = self.model.shape
 
         for face in self.obj.faces:

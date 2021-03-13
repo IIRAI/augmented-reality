@@ -7,7 +7,7 @@ import numpy as np
 
 # Minimum number of matches that have to be found
 # to consider the recognition valid
-MIN_MATCHES = 10
+MIN_MATCHES = 20
 
 # matrix of camera parameters (made up but works quite well for me)
 # set u0 and v0 as half of the screen resolution

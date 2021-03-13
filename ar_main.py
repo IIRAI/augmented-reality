@@ -1,22 +1,26 @@
 '''
-Main script to run a augmented reality video stream with the PC camera
+Main script to run an augmented reality video stream with the PC camera
 '''
 
 import cv2
 import src.parse_lib as p
 from src.augmented_reality_3D import AR_3D
 
+# IMAGE = 'ticket.jpg'
+# IMAGE = 'glyph_01.png'
+IMAGE = 'ruppa.jpg'
+
 
 def main():
     args = p.parse_input()     # manage input parameters
-    cap = cv2.VideoCapture(0)  # begin camera streaming
+    cap = cv2.VideoCapture(2)  # begin camera streaming
     fps = cap.get(cv2.CAP_PROP_FPS)
     sample_time = 1 / fps
     # init object for augmented reality computation
-    ar_3d = AR_3D('ticket', args.model, sample_time,
+    ar_3d = AR_3D(IMAGE, args.model, sample_time,
                   args.rectangle, args.matches)
     while True:
-        ret, frame = cap.read()                # get frame from camera
+        ret, frame = cap.read()  # get frame from camera
         if not ret:
             print("Unable to capture video")
             return
